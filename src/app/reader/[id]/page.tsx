@@ -1,13 +1,11 @@
 import { notFound, redirect } from 'next/navigation';
 import ReaderClient from './ReaderClient';
 import { auth } from '@/lib/auth';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Button } from '@/components/ui/Button';
-import { Upload, ExternalLink } from 'lucide-react';
-
-const prisma = new PrismaClient();
+import { ExternalLink } from 'lucide-react';
 
 export default async function ReaderPage({ params }: { params: { id: string } }) {
   const session = await auth();
@@ -46,15 +44,22 @@ export default async function ReaderPage({ params }: { params: { id: string } })
                   </Button>
                 </a>
               )}
-              <Button variant="outline">
-                <Upload className="w-4 h-4" /> Subir mi archivo
-              </Button>
             </div>
+            <p className="text-white/40 text-sm">
+              ¿Ya tenés el archivo? Subilo desde tu <a href="/library" className="text-purple-300 hover:underline">biblioteca</a> con el botón "Agregar Libro".
+            </p>
           </GlassPanel>
         </div>
       </MainLayout>
     );
   }
 
-  return <ReaderClient book={book as any} userId={session.user.id} fileUrl={userBook.ownedFileUrl || book.fileUrl || undefined} />;
+  return (
+    <ReaderClient
+      book={book as any}
+      userId={session.user.id}
+      fileUrl={userBook.ownedFileUrl || book.fileUrl || undefined}
+      initialPage={Math.max(1, userBook.currentPage)}
+    />
+  );
 }

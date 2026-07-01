@@ -2,9 +2,10 @@ import { Suspense } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { getNYTBestsellers } from '@/lib/services/nyt';
-import { Compass, BookOpen, Plus } from 'lucide-react';
+import { Compass, BookOpen } from 'lucide-react';
 import Image from 'next/image';
 import { serverT } from '@/lib/i18n/serverT';
+import { DiscoverBookActions } from '@/components/discover/DiscoverBookActions';
 
 export const metadata = {
   title: 'Discover - LuminaSphere',
@@ -61,7 +62,16 @@ export default async function DiscoverPage({
                     )}
                   </div>
                   <h3 className="text-white font-medium text-sm line-clamp-1 w-full" title={book.title}>{book.title}</h3>
-                  <p className="text-white/40 text-xs mt-1 w-full truncate">{book.author}</p>
+                  <p className="text-white/40 text-xs mt-1 w-full truncate mb-3">{book.author}</p>
+                  <DiscoverBookActions
+                    book={{
+                      title: book.title,
+                      author: book.author,
+                      coverUrl: book.coverUrl,
+                      description: book.description,
+                      isbn: book.isbn,
+                    }}
+                  />
                 </GlassPanel>
               ))}
             </div>
@@ -73,11 +83,10 @@ export default async function DiscoverPage({
 }
 
 async function SearchResults({ query }: { query: string }) {
-  const t = await serverT();
   // We can fetch from API route internally or call service directly if we are Server Component
   const { searchBooks } = await import('@/lib/services/bookSearch');
   const { findReadableSource } = await import('@/lib/services/publicDomain');
-  
+
   const results = await searchBooks(query);
   const enriched = await Promise.all(results.map(async (book) => {
     const readable = await findReadableSource(book.title, book.author);
@@ -85,7 +94,7 @@ async function SearchResults({ query }: { query: string }) {
   }));
 
   if (enriched.length === 0) {
-    return <div className="text-white/60">No results found for "{query}".</div>;
+    return <div className="text-white/60">No encontramos resultados para "{query}".</div>;
   }
 
   return (
@@ -110,15 +119,21 @@ async function SearchResults({ query }: { query: string }) {
               </span>
             )}
             <div className="mt-auto">
-              {book.isPublicDomain ? (
-                <button className="w-full py-2 bg-green-500/20 text-green-400 text-sm rounded-lg hover:bg-green-500/30 transition flex items-center justify-center gap-2">
-                  <BookOpen className="w-4 h-4" /> {t('discover.readNow')}
-                </button>
-              ) : (
-                <button className="w-full py-2 bg-white/10 text-white text-sm rounded-lg hover:bg-white/20 transition flex items-center justify-center gap-2">
-                  <Plus className="w-4 h-4" /> {t('discover.addToLibrary')}
-                </button>
-              )}
+              <DiscoverBookActions
+                book={{
+                  title: book.title,
+                  author: book.author,
+                  coverUrl: book.coverUrl,
+                  description: book.description,
+                  isbn: book.isbn,
+                  publishedYear: book.publishedYear,
+                  seriesName: book.seriesName,
+                  seriesIndex: book.seriesIndex,
+                  isPublicDomain: book.isPublicDomain,
+                  fileUrl: book.fileUrl,
+                  sourceIds: book.sourceIds,
+                }}
+              />
             </div>
           </div>
         </GlassPanel>

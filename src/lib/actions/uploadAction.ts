@@ -6,8 +6,7 @@ import { STARTER_BOOK_LIMIT } from '@/lib/constants';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
-// @ts-ignore
-import pdf from 'pdf-parse';
+import { PDFParse } from 'pdf-parse';
 // @ts-ignore
 import { EPub } from 'epub2';
 import { auth } from '@/lib/auth';
@@ -65,49 +64,60 @@ export async function uploadBook(formData: FormData): Promise<UploadResult> {
 
     const buffer = Buffer.from(await file.arrayBuffer());
     const ext = path.extname(file.name).toLowerCase();
-    
-    // Create temp file
-    const tempDir = os.tmpdir();
-    const tempPath = path.join(tempDir, `upload-${Date.now()}${ext}`);
-    await fs.writeFile(tempPath, buffer);
 
     let parsedTitle = titleFromForm || file.name.replace(ext, '');
     let parsedAuthor = authorFromForm || 'Unknown Author';
     let fullText = '';
+    let pageCount: number | null = null;
 
     try {
       if (ext === '.pdf') {
-        const data = await pdf(buffer);
-        fullText = data.text;
-        if (data.info?.Title && !titleFromForm) parsedTitle = data.info.Title;
-        if (data.info?.Author && !authorFromForm) parsedAuthor = data.info.Author;
+        // pdf-parse v2: API de clase (la v1 exportaba una función default).
+        const parser = new PDFParse({ data: new Uint8Array(buffer) });
+        try {
+          const textResult = await parser.getText();
+          fullText = textResult.text;
+          pageCount = textResult.total || null;
+          const info = await parser.getInfo().catch(() => null);
+          const meta = (info as any)?.info;
+          if (meta?.Title && !titleFromForm) parsedTitle = String(meta.Title);
+          if (meta?.Author && !authorFromForm) parsedAuthor = String(meta.Author);
+        } finally {
+          await parser.destroy().catch(() => {});
+        }
       } else if (ext === '.epub') {
-        const epub = await EPub.createAsync(tempPath);
-        if (epub.metadata?.title && !titleFromForm) parsedTitle = epub.metadata.title;
-        if (epub.metadata?.creator && !authorFromForm) parsedAuthor = epub.metadata.creator;
-        
-        // Extract text
-        if (epub.flow) {
-          for (const chapter of epub.flow) {
-            try {
-              const text = await epub.getChapterAsync(chapter.id);
-              fullText += text.replace(/<[^>]*>?/gm, ' ') + '\n';
-            } catch (e) {
-              console.warn("Could not read chapter:", chapter.id);
+        // epub2 lee desde un path, así que necesitamos un archivo temporal.
+        const tempPath = path.join(os.tmpdir(), `upload-${Date.now()}${ext}`);
+        await fs.writeFile(tempPath, buffer);
+        try {
+          const epub = await EPub.createAsync(tempPath);
+          if (epub.metadata?.title && !titleFromForm) parsedTitle = epub.metadata.title;
+          if (epub.metadata?.creator && !authorFromForm) parsedAuthor = epub.metadata.creator;
+
+          if (epub.flow) {
+            for (const chapter of epub.flow) {
+              try {
+                const text = await epub.getChapterAsync(chapter.id);
+                fullText += text.replace(/<[^>]*>?/gm, ' ') + '\n';
+              } catch (e) {
+                console.warn('Could not read chapter:', chapter.id);
+              }
             }
           }
+        } finally {
+          await fs.unlink(tempPath).catch(() => {});
         }
       } else {
-        await fs.unlink(tempPath).catch(() => {});
-        return { success: false, error: 'Unsupported file format. Use PDF or EPUB.' };
+        return { success: false, error: 'Formato no soportado. Subí un PDF o un EPUB.' };
       }
     } catch (parseError) {
-      console.error("Error parsing file:", parseError);
-      await fs.unlink(tempPath).catch(() => {});
-      return { success: false, error: 'Error parsing file content' };
+      console.error('Error parsing file:', parseError);
+      return { success: false, error: 'No pudimos leer el archivo. Verificá que no esté dañado ni protegido con contraseña.' };
     }
 
-    await fs.unlink(tempPath).catch(() => {});
+    if (!fullText.trim()) {
+      return { success: false, error: 'El archivo no tiene texto extraíble (¿es un PDF escaneado?).' };
+    }
 
     const bookData: any = {
       title: parsedTitle.trim() || 'Untitled',
@@ -117,6 +127,7 @@ export async function uploadBook(formData: FormData): Promise<UploadResult> {
       language: 'en',
       fullText: fullText, // Guardamos el texto completo para el reader
       fileUrl: file.name,
+      pageCount,
       readable: true, // El usuario subió su propia copia → leíble in-app
     };
 

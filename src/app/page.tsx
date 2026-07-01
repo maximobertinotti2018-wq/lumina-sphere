@@ -3,6 +3,7 @@ import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Button } from '@/components/ui/Button';
 import { BookOpen, TrendingUp, Heart, Clock } from 'lucide-react';
 import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import { getUserBooks, getUserStats } from '@/lib/actions/bookActions';
 import { EmptyState } from '@/components/ui/EmptyState';
 import Link from 'next/link';
@@ -10,7 +11,8 @@ import { serverT } from '@/lib/i18n/serverT';
 
 export default async function HomePage() {
   const session = await auth();
-  if (!session?.user?.id) return null;
+  // Sin sesión: al login. Antes devolvía null → página en blanco para anónimos.
+  if (!session?.user?.id) redirect('/login');
 
   const t = await serverT();
 

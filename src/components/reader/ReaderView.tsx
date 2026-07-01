@@ -79,6 +79,9 @@ export function ReaderView({
     if (pages.length > 0) {
       setTotalPages(pages.length);
       setIsLoading(false);
+      // Si la página guardada quedó fuera de rango (el libro se re-paginó),
+      // la ajustamos para no mostrar una página vacía.
+      setCurrentPage((page) => Math.min(page, pages.length));
     }
   }, [pages.length]);
 

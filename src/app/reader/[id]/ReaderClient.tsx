@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils/cn";
 
 type DockTab = "characters" | "vibe" | null;
 
-export default function ReaderClient({ book, fileUrl }: { book: Book, userId?: string, fileUrl?: string }) {
+export default function ReaderClient({ book, fileUrl, initialPage = 1 }: { book: Book, userId?: string, fileUrl?: string, initialPage?: number }) {
   const router = useRouter();
 
   // Panel activo del dock (uno a la vez → nunca se pisan).
@@ -71,7 +71,7 @@ export default function ReaderClient({ book, fileUrl }: { book: Book, userId?: s
     <>
       <ReaderView
         book={fullBook as any}
-        initialPage={1}
+        initialPage={initialPage}
         onPageChange={handlePageChange}
         onClose={handleClose}
       />
