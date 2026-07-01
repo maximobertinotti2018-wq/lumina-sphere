@@ -1,0 +1,295 @@
+// ==========================================
+// LUMINA SPHERE - PRISMA SCHEMA (SQLite)
+// ==========================================
+// Database schema optimizado para SQLite
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==========================================
+// USER & AUTHENTICATION
+// ==========================================
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  image         String?
+  emailVerified DateTime?
+  hashedPassword String?
+  subscriptionTier String @default("starter")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  accounts      Account[]
+  sessions      Session[]
+  books         UserBook[]
+  notes         Note[]
+  highlights    Highlight[]
+  bookmarks     Bookmark[]
+  readingSessions ReadingSession[]
+
+  @@map("users")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+// ==========================================
+// BOOKS
+// ==========================================
+
+model Book {
+  id              String    @id @default(cuid())
+  title           String
+  author          String
+  description     String?
+  coverUrl        String?
+  publishedDate   String?
+  pageCount       Int?
+  isbn            String?   @unique
+  mood            String
+  rating          Float?
+  source          String
+  
+  // Phase 11 additions
+  seriesName      String?
+  seriesIndex     Float?
+  isPublicDomain  Boolean   @default(false)
+  contentSource   String?
+  fileUrl         String?
+  fullText        String?
+  readable        Boolean   @default(false)
+  externalLinks   String?
+
+  // Caché de IA (Gemini) para no recalcular en cada apertura
+  charactersJson  String?   // JSON: personajes extraídos
+  vibeJson        String?   // JSON: { mood, movies, playlists }
+
+  // Metadata (stored as JSON strings in SQLite)
+  genres          String?   // JSON array
+  subjects        String?   // JSON array
+  language        String    @default("en")
+  
+  // External IDs
+  googleBooksId   String?   @unique
+  openLibraryId   String?   @unique
+  gutenbergId     String?   @unique
+  
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relations
+  userBooks       UserBook[]
+  notes           Note[]
+  highlights      Highlight[]
+
+  @@index([mood])
+  @@index([author])
+  @@index([isbn])
+  @@index([seriesName])
+  @@map("books")
+}
+
+model UserBook {
+  id              String    @id @default(cuid())
+  userId          String
+  bookId          String
+  
+  ownedFileUrl    String?
+  
+  // Reading status
+  status          String    @default("want-to-read")
+  readingProgress Float     @default(0)
+  currentPage     Int       @default(0)
+  currentChapter  Int       @default(0)
+  
+  // User data
+  userRating      Int?
+  isFavorite      Boolean   @default(false)
+  
+  // Settings
+  fontSize        Int       @default(18)
+  fontFamily      String    @default("serif")
+  theme           String    @default("dark")
+  
+  startedAt       DateTime?
+  finishedAt      DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book            Book      @relation(fields: [bookId], references: [id], onDelete: Cascade)
+  bookmarks       Bookmark[]
+  readingSessions ReadingSession[]
+
+  @@unique([userId, bookId])
+  @@index([userId, status])
+  @@map("user_books")
+}
+
+// ==========================================
+// NOTES & HIGHLIGHTS
+// ==========================================
+
+model Note {
+  id          String   @id @default(cuid())
+  userId      String
+  bookId      String
+  content     String
+  color       String   @default("#8b5cf6")
+  pageNumber  Int
+  chapter     Int?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+  @@map("notes")
+}
+
+model Highlight {
+  id          String   @id @default(cuid())
+  userId      String
+  bookId      String
+  text        String
+  color       String   @default("#8b5cf6")
+  pageNumber  Int
+  chapter     Int?
+  
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  book        Book     @relation(fields: [bookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, bookId])
+  @@map("highlights")
+}
+
+model Bookmark {
+  id         String   @id @default(cuid())
+  userId     String
+  userBookId String
+  pageNumber Int
+  chapter    Int?
+  label      String?
+  
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userBook   UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, userBookId])
+  @@map("bookmarks")
+}
+
+// ==========================================
+// READING SESSIONS & ANALYTICS
+// ==========================================
+
+model ReadingSession {
+  id         String   @id @default(cuid())
+  userId     String
+  userBookId String
+  
+  startTime  DateTime
+  endTime    DateTime?
+  duration   Int?
+  pagesRead  Int       @default(0)
+  averageWPM Int?
+  
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userBook   UserBook @relation(fields: [userBookId], references: [id], onDelete: Cascade)
+
+  @@index([userId, userBookId])
+  @@map("reading_sessions")
+}
+
+// ==========================================
+// CACHE & TRANSLATIONS
+// ==========================================
+
+model Translation {
+  id           String   @id @default(cuid())
+  bookId       String
+  chapterHash  String
+  sourceLang   String
+  targetLang   String
+  originalText String
+  translated   String
+  
+  hits         Int      @default(0)
+  lastAccessed DateTime @default(now())
+  
+  createdAt    DateTime @default(now())
+  expiresAt    DateTime
+
+  @@unique([bookId, chapterHash, sourceLang, targetLang])
+  @@index([expiresAt])
+  @@map("translations")
+}
+
+// ==========================================
+// RECOMMENDATIONS
+// ==========================================
+
+model Recommendation {
+  id            String   @id @default(cuid())
+  userId        String
+  sourceBookId  String
+  targetBookId  String?
+  targetMovieId Int?
+  targetTrackId String?
+  
+  type          String
+  mood          String
+  matchScore    Float
+  
+  wasViewed     Boolean  @default(false)
+  wasAccepted   Boolean  @default(false)
+  
+  createdAt     DateTime @default(now())
+
+  @@index([userId, sourceBookId])
+  @@index([mood])
+  @@map("recommendations")
+}

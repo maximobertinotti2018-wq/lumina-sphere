@@ -1,0 +1,205 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ==========================================
+   FONTS
+   ========================================== */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
+
+:root {
+  --font-inter: 'Inter', sans-serif;
+  --font-playfair: 'Playfair Display', serif;
+}
+
+/* ==========================================
+   GLASSMORPHISM DESIGN SYSTEM
+   ========================================== */
+:root {
+  /* Glass backgrounds */
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-bg-strong: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: 12px;
+  --glass-blur-strong: 16px;
+
+  /* Mood colors (updated dynamically by JS) */
+  --mood-primary: #1a1625;
+  --mood-secondary: #3f324b;
+  --mood-accent: #644e71;
+
+  /* Layout */
+  --sidebar-width: 280px;
+  --sidebar-collapsed: 80px;
+  --player-height: 96px;
+
+  /* Animations */
+  --ease-out-expo: cubic-bezier(0.19, 1, 0.22, 1);
+}
+
+/* ==========================================
+   BASE STYLES
+   ========================================== */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  font-family: var(--font-inter);
+}
+
+body {
+  background: #000000;
+  color: #ffffff;
+  overflow-x: hidden;
+}
+
+/* ==========================================
+   GLASSMORPHISM COMPONENTS
+   ========================================== */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+}
+
+.glass-panel-strong {
+  background: var(--glass-bg-strong);
+  backdrop-filter: blur(var(--glass-blur-strong));
+  -webkit-backdrop-filter: blur(var(--glass-blur-strong));
+  border: 1px solid var(--glass-border);
+}
+
+/* ==========================================
+   MOOD GRADIENTS
+   ========================================== */
+.gradient-mood {
+  background: linear-gradient(
+    135deg,
+    var(--mood-primary) 0%,
+    var(--mood-secondary) 50%,
+    var(--mood-accent) 100%
+  );
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+.text-gradient-mood {
+  background: linear-gradient(
+    135deg,
+    var(--mood-primary),
+    var(--mood-secondary),
+    var(--mood-accent)
+  );
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-size: 200% 200%;
+  animation: gradient-shift 15s ease infinite;
+}
+
+/* ==========================================
+   TYPOGRAPHY
+   ========================================== */
+.reading-text {
+  font-family: var(--font-playfair);
+  line-height: 1.8;
+  letter-spacing: 0.01em;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.reading-text h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  margin-top: 2rem;
+}
+
+.reading-text p {
+  margin-bottom: 1.5rem;
+  text-indent: 2rem;
+}
+
+.reading-text p:first-of-type {
+  text-indent: 0;
+}
+
+/* ==========================================
+   HOVER EFFECTS
+   ========================================== */
+.hover-lift {
+  transition: transform 0.3s var(--ease-out-expo);
+}
+
+.hover-lift:hover {
+  transform: translateY(-8px);
+}
+
+.hover-glow {
+  transition: box-shadow 0.3s ease;
+}
+
+.hover-glow:hover {
+  box-shadow: 0 0 30px rgba(255, 255, 255, 0.1);
+}
+
+/* ==========================================
+   ANIMATIONS
+   ========================================== */
+.card-reveal {
+  animation: fade-in-up 0.6s ease-out backwards;
+}
+
+.card-reveal:nth-child(1) { animation-delay: 0.05s; }
+.card-reveal:nth-child(2) { animation-delay: 0.1s; }
+.card-reveal:nth-child(3) { animation-delay: 0.15s; }
+.card-reveal:nth-child(4) { animation-delay: 0.2s; }
+.card-reveal:nth-child(5) { animation-delay: 0.25s; }
+
+/* ==========================================
+   SCROLLBAR
+   ========================================== */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ==========================================
+   PRINT STYLES
+   ========================================== */
+@media print {
+  body {
+    background: white;
+    color: black;
+  }
+
+  .glass-panel,
+  .glass-panel-strong {
+    background: white;
+    border: 1px solid #ddd;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+}
