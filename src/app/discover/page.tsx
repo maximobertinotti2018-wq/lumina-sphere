@@ -2,10 +2,12 @@ import { Suspense } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { getNYTBestsellers } from '@/lib/services/nyt';
-import { Compass, BookOpen } from 'lucide-react';
+import { Compass, BookOpen, Download, Library, ExternalLink } from 'lucide-react';
 import Image from 'next/image';
 import { serverT } from '@/lib/i18n/serverT';
 import { DiscoverBookActions } from '@/components/discover/DiscoverBookActions';
+import { searchOpenAccessBooks } from '@/lib/services/doab';
+import { searchBorrowableBooks } from '@/lib/services/internetArchive';
 
 export const metadata = {
   title: 'Discover - LuminaSphere',
@@ -86,11 +88,13 @@ async function SearchResults({ query }: { query: string }) {
   const { searchBooks } = await import('@/lib/services/bookSearch');
   const { findReadableSourcesForQuery, matchReadableSource } = await import('@/lib/services/publicDomain');
 
-  // Búsqueda de catálogo y de dominio público EN PARALELO, una llamada cada una
-  // (antes: una llamada a Gutendex por resultado → hasta 20).
-  const [results, gutenbergSources] = await Promise.all([
+  // Todas las fuentes EN PARALELO: catálogo, dominio público (Gutenberg),
+  // acceso abierto (DOAB) y préstamo (Internet Archive).
+  const [results, gutenbergSources, openAccess, borrowable] = await Promise.all([
     searchBooks(query),
     findReadableSourcesForQuery(query),
+    searchOpenAccessBooks(query),
+    searchBorrowableBooks(query),
   ]);
 
   const enriched = results.map((book) => {
@@ -98,11 +102,13 @@ async function SearchResults({ query }: { query: string }) {
     return { ...book, isPublicDomain: !!readable, readable: !!readable, fileUrl: readable };
   });
 
-  if (enriched.length === 0) {
+  if (enriched.length === 0 && openAccess.length === 0 && borrowable.length === 0) {
     return <div className="text-white/60">No encontramos resultados para "{query}".</div>;
   }
 
   return (
+    <div className="space-y-12">
+    {enriched.length > 0 && (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
       {enriched.map((book, idx) => (
         <GlassPanel key={idx} variant="strong" className="p-4 flex gap-4 transition-all hover:bg-white/10">
@@ -143,6 +149,84 @@ async function SearchResults({ query }: { query: string }) {
           </div>
         </GlassPanel>
       ))}
+    </div>
+    )}
+
+    {/* Acceso abierto (DOAB): académicos recientes, descargables legal */}
+    {openAccess.length > 0 && (
+      <section>
+        <h2 className="text-2xl font-semibold text-white mb-2 flex items-center gap-2">
+          <Download className="w-6 h-6 text-green-400" />
+          Acceso abierto · descarga libre
+        </h2>
+        <p className="text-white/50 text-sm mb-6">
+          Libros académicos de acceso abierto (DOAB), muchos recientes.
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {openAccess.map((book) => (
+            <GlassPanel key={book.id} variant="strong" className="p-5 flex flex-col transition-all hover:bg-white/10">
+              <h3 className="text-white font-semibold text-lg line-clamp-2">{book.title}</h3>
+              <p className="text-white/60 text-sm mb-1">{book.author}</p>
+              {book.year && <span className="text-xs text-green-300/80 mb-2">{book.year}</span>}
+              {book.description && (
+                <p className="text-white/40 text-xs line-clamp-3 mb-4">{book.description}</p>
+              )}
+              <a
+                href={book.downloadUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-auto w-full py-2 bg-green-500/20 text-green-300 text-sm rounded-lg hover:bg-green-500/30 transition flex items-center justify-center gap-2"
+              >
+                <Download className="w-4 h-4" />
+                {book.isDirectDownload ? 'Descargar PDF' : 'Ver y descargar'}
+              </a>
+            </GlassPanel>
+          ))}
+        </div>
+      </section>
+    )}
+
+    {/* Internet Archive: préstamo digital controlado */}
+    {borrowable.length > 0 && (
+      <section>
+        <h2 className="text-2xl font-semibold text-white mb-2 flex items-center gap-2">
+          <Library className="w-6 h-6 text-amber-400" />
+          Para pedir prestado
+        </h2>
+        <p className="text-white/50 text-sm mb-6">
+          Préstamo digital gratuito en Internet Archive (leer online, como en una biblioteca).
+        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {borrowable.map((book) => (
+            <GlassPanel key={book.id} variant="strong" className="p-4 flex gap-4 transition-all hover:bg-white/10">
+              <div className="relative w-20 h-28 rounded-md overflow-hidden shrink-0 shadow-lg">
+                {book.coverUrl ? (
+                  <Image src={book.coverUrl} alt={book.title} fill sizes="80px" className="object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-white/5 flex items-center justify-center">
+                    <BookOpen className="w-6 h-6 text-white/20" />
+                  </div>
+                )}
+              </div>
+              <div className="flex flex-col flex-1 min-w-0">
+                <h3 className="text-white font-semibold line-clamp-2">{book.title}</h3>
+                <p className="text-white/60 text-sm">{book.author}</p>
+                {book.year && <span className="text-xs text-white/40 mb-2">{book.year}</span>}
+                <a
+                  href={book.archiveUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="mt-auto w-full py-2 bg-amber-500/20 text-amber-300 text-sm rounded-lg hover:bg-amber-500/30 transition flex items-center justify-center gap-2"
+                >
+                  <ExternalLink className="w-4 h-4" />
+                  {book.access === 'public' ? 'Leer gratis' : 'Pedir prestado'}
+                </a>
+              </div>
+            </GlassPanel>
+          ))}
+        </div>
+      </section>
+    )}
     </div>
   );
 }
