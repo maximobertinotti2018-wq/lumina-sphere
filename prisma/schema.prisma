@@ -1,15 +1,17 @@
 // ==========================================
-// LUMINA SPHERE - PRISMA SCHEMA (SQLite)
+// LUMINA SPHERE - PRISMA SCHEMA (PostgreSQL / Supabase)
 // ==========================================
-// Database schema optimizado para SQLite
+// DATABASE_URL: pooler de Supabase (puerto 6543) para el runtime.
+// DIRECT_URL:   conexión directa (puerto 5432) para migraciones.
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
 
 // ==========================================
