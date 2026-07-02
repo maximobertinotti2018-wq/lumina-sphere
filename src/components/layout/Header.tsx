@@ -33,23 +33,16 @@ export function Header({
   const { data: session } = useSession();
   const router = useRouter();
 
-  // Cerrar el menú de usuario al clickear afuera o con Escape.
+  // Cerrar el menú con Escape. El click-afuera lo maneja un overlay (más
+  // robusto que un listener de mousedown, que competía con el click de apertura
+  // y hacía que el menú no llegara a mostrarse).
   useEffect(() => {
     if (!isUserMenuOpen) return;
-    const onClick = (e: MouseEvent) => {
-      if (userMenuRef.current && !userMenuRef.current.contains(e.target as Node)) {
-        setIsUserMenuOpen(false);
-      }
-    };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setIsUserMenuOpen(false);
     };
-    document.addEventListener('mousedown', onClick);
     document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onClick);
-      document.removeEventListener('keydown', onKey);
-    };
+    return () => document.removeEventListener('keydown', onKey);
   }, [isUserMenuOpen]);
 
   const handleSearch = (e: React.FormEvent) => {
@@ -156,6 +149,15 @@ export function Header({
                   {userName}
                 </span>
               </button>
+
+              {/* Overlay: cierra el menú al tocar cualquier lugar fuera. */}
+              {isUserMenuOpen && (
+                <div
+                  className="fixed inset-0 z-40"
+                  aria-hidden
+                  onClick={() => setIsUserMenuOpen(false)}
+                />
+              )}
 
               <AnimatePresence>
                 {isUserMenuOpen && (
