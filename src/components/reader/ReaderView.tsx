@@ -54,11 +54,7 @@ export function ReaderView({
   const [notes, setNotes] = useState<Note[]>([]);
 
   // Refs
-  const viewerRef = useRef<HTMLIFrameElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-
-  // Mock PDF URL (en producción, esto vendría del book)
-  const pdfUrl = book.coverUrl || '/sample.pdf';
 
   // Texto completo extraído al subir el libro (EPUB/PDF).
   const fullText = (book as any).fullText as string | undefined;
@@ -75,15 +71,16 @@ export function ReaderView({
     return chunks;
   }, [fullText]);
 
-  // Si hay texto, configuramos el total de páginas y quitamos el loading.
+  // Configuramos el total de páginas y quitamos el loading (con o sin texto:
+  // si no hay contenido legible mostramos el estado vacío, no un spinner eterno).
   useEffect(() => {
     if (pages.length > 0) {
       setTotalPages(pages.length);
-      setIsLoading(false);
       // Si la página guardada quedó fuera de rango (el libro se re-paginó),
       // la ajustamos para no mostrar una página vacía.
       setCurrentPage((page) => Math.min(page, pages.length));
     }
+    setIsLoading(false);
   }, [pages.length]);
 
   // Cargar las notas guardadas del libro al montar.
@@ -99,36 +96,16 @@ export function ReaderView({
     return () => { cancelled = true; };
   }, [book.id]);
 
-  // Handle PDF load
-  const handlePdfLoad = () => {
-    setIsLoading(false);
-    // TODO: Get actual page count from PDF
-    setTotalPages(book.pageCount || 100);
-  };
-
   // Handle page navigation
   const handlePageChange = (newPage: number) => {
     const clampedPage = Math.max(1, Math.min(newPage, totalPages));
     setCurrentPage(clampedPage);
     onPageChange?.(clampedPage);
-
-    // Navigate PDF
-    if (viewerRef.current) {
-      // TODO: Implement actual PDF page navigation
-      // This depends on the PDF viewer library used
-    }
   };
 
-  // Handle zoom
+  // Handle zoom (aplica al tamaño de fuente del texto)
   const handleZoomChange = (newZoom: number) => {
-    const clampedZoom = Math.max(50, Math.min(200, newZoom));
-    setZoom(clampedZoom);
-
-    // Apply zoom to viewer
-    if (viewerRef.current) {
-      viewerRef.current.style.transform = `scale(${clampedZoom / 100})`;
-      viewerRef.current.style.transformOrigin = 'top center';
-    }
+    setZoom(Math.max(50, Math.min(200, newZoom)));
   };
 
   // Toggle focus mode
@@ -268,37 +245,26 @@ export function ReaderView({
                 </article>
               </div>
             ) : (
-              /* Fallback: archivo real servible (PDF) */
-              <iframe
-                ref={viewerRef}
-                src={`${pdfUrl}#page=${currentPage}&zoom=${zoom}`}
-                className="w-full h-full border-0"
-                onLoad={handlePdfLoad}
-                title={book.title}
-                style={{
-                  transform: `scale(${zoom / 100})`,
-                  transformOrigin: 'top center',
-                  transition: 'transform 0.3s ease',
-                }}
-              />
+              /* Sin texto extraíble: estado vacío honesto (antes se metía la
+                 URL de la portada en un iframe como si fuera un PDF). */
+              !isLoading && (
+                <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-center px-6">
+                  <p className="text-white/70 text-lg font-semibold">
+                    Este libro no tiene contenido legible todavía
+                  </p>
+                  <p className="text-white/40 text-sm max-w-md">
+                    Volvé a subir el archivo EPUB o PDF desde tu biblioteca para
+                    extraer el texto y poder leerlo acá.
+                  </p>
+                  <button
+                    onClick={onClose}
+                    className="mt-2 px-5 py-2.5 rounded-xl bg-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/30 transition-colors"
+                  >
+                    Volver a la biblioteca
+                  </button>
+                </div>
+              )
             )}
-
-            {/* Alternative: react-pdf implementation
-            <Document
-              file={pdfUrl}
-              onLoadSuccess={({ numPages }) => {
-                setTotalPages(numPages);
-                setIsLoading(false);
-              }}
-            >
-              <Page 
-                pageNumber={currentPage}
-                scale={zoom / 100}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-            </Document>
-            */}
           </div>
         </div>
 
@@ -356,17 +322,6 @@ export function ReaderView({
         )}
       </AnimatePresence>
 
-      {/* Keyboard shortcuts */}
-      <div className="fixed bottom-0 left-0 opacity-0">
-        <button
-          onClick={() => handlePageChange(currentPage - 1)}
-          onKeyDown={(e) => {
-            if (e.key === 'ArrowLeft') handlePageChange(currentPage - 1);
-            if (e.key === 'ArrowRight') handlePageChange(currentPage + 1);
-            if (e.key === 'Escape') toggleFocusMode();
-          }}
-        />
-      </div>
     </div>
   );
 }

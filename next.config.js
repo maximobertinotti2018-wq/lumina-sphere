@@ -151,12 +151,6 @@ const nextConfig = {
   // WEBPACK CONFIGURATION
   // ==========================================
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    // Web Workers support
-    config.module.rules.push({
-      test: /\.worker\.(js|ts)$/,
-      use: { loader: 'worker-loader' },
-    });
-
     // Handle canvas for PDF.js (server-side)
     if (isServer) {
       config.externals.push('canvas');
@@ -195,7 +189,6 @@ const nextConfig = {
     optimizePackageImports: [
       'lucide-react',
       'framer-motion',
-      '@radix-ui/react-slot',
     ],
     
     // Enable turbo mode (faster builds)
