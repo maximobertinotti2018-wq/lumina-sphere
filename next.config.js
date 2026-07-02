@@ -185,6 +185,12 @@ const nextConfig = {
     // Si se bundlean, pdf-parse lanza "Object.defineProperty called on non-object".
     serverComponentsExternalPackages: ['pdf-parse', 'epub2'],
 
+    // Permite subir libros grandes por Server Actions (el default de Vercel es 1MB).
+    // Debe coincidir con el tope de uploadAction.ts (25 MB).
+    serverActions: {
+      bodySizeLimit: '25mb',
+    },
+
     // Optimize package imports
     optimizePackageImports: [
       'lucide-react',
