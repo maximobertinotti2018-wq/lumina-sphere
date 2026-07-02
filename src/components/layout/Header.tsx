@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Search, Bell, User, Moon, Sun, LogOut, Settings } from 'lucide-react';
+import { Search, User, LogOut, Settings } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import Link from 'next/link';
@@ -16,8 +16,6 @@ interface HeaderProps {
   userName?: string;
   userAvatar?: string;
   onSearch?: (query: string) => void;
-  onThemeToggle?: () => void;
-  theme?: 'light' | 'dark';
   className?: string;
 }
 
@@ -25,13 +23,10 @@ export function Header({
   userName = 'User',
   userAvatar,
   onSearch,
-  onThemeToggle,
-  theme = 'dark',
   className,
 }: HeaderProps) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [hasNotifications] = useState(true);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const userMenuRef = useRef<HTMLDivElement>(null);
   const { t } = useLanguage();
@@ -128,49 +123,6 @@ export function Header({
 
           <div className="flex items-center gap-2 sm:gap-3">
             <LanguageSwitcher />
-
-            <button
-              onClick={onThemeToggle}
-              aria-label="Cambiar tema"
-              className={cn(
-                'p-2.5 rounded-xl',
-                'bg-white/5 backdrop-blur-md',
-                'border border-white/10',
-                'text-white/60 hover:text-white',
-                'hover:bg-white/10 hover:border-white/20',
-                'transition-all duration-200'
-              )}
-            >
-              {theme === 'dark' ? (
-                <Moon className="w-5 h-5" />
-              ) : (
-                <Sun className="w-5 h-5" />
-              )}
-            </button>
-
-            {/* Notifications */}
-            <button
-              aria-label="Notificaciones"
-              className={cn(
-                'relative p-2.5 rounded-xl',
-                'hidden sm:inline-flex',
-                'bg-white/5 backdrop-blur-md',
-                'border border-white/10',
-                'text-white/60 hover:text-white',
-                'hover:bg-white/10 hover:border-white/20',
-                'transition-all duration-200'
-              )}
-            >
-              <Bell className="w-5 h-5" />
-              
-              {hasNotifications && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
-                />
-              )}
-            </button>
 
             {/* User Avatar + Menu */}
             <div className="relative" ref={userMenuRef}>

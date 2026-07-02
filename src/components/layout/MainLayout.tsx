@@ -1,6 +1,5 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { DynamicBackground } from '@/components/ui/DynamicBackground';
 import { Sidebar } from './Sidebar';
@@ -28,20 +27,6 @@ export function MainLayout({
   const userName = session?.user?.name || 'User';
   const userAvatar = session?.user?.image || undefined;
 
-  const [theme, setTheme] = useState<'light' | 'dark'>('dark');
-  
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 1024) {
-        
-      }
-    };
-
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
-
   return (
     <div className="relative min-h-screen overflow-hidden">
       <DynamicBackground mood={mood} />
@@ -61,8 +46,6 @@ export function MainLayout({
           userName={userName}
           userAvatar={userAvatar}
           onSearch={onSearch}
-          onThemeToggle={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          theme={theme}
         />
 
         <main

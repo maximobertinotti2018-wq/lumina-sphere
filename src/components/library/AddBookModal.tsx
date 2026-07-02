@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button';
 import { cn } from '@/lib/utils/cn';
 import type { MoodTag } from '@/types';
 import { uploadBook } from '@/lib/actions/uploadAction';
+import { useLanguage } from '@/context/LanguageContext';
+import { useToastStore } from '@/lib/stores/toastStore';
 
 interface AddBookModalProps {
   isOpen: boolean;
@@ -34,6 +36,8 @@ export function AddBookModal({
   onUploadStart,
   onUploadSuccess,
 }: AddBookModalProps) {
+  const { t } = useLanguage();
+  const addToast = useToastStore((s) => s.addToast);
   const [isLoading, setIsLoading] = useState(false);
   const [isUploading, startUpload] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -97,7 +101,7 @@ export function AddBookModal({
         setFormData(prev => ({ ...prev, title: file.name.replace(`.${ext}`, '') }));
       }
     } else {
-      setError('Please upload a PDF or EPUB file.');
+      setError(t('addBook.invalidFile'));
     }
   };
 
@@ -118,6 +122,7 @@ export function AddBookModal({
 
         const result = await uploadBook(data);
         if (result.success) {
+          addToast(t('toast.uploadOk'), 'success');
           await onUploadSuccess();
           handleClose();
         } else {
@@ -127,11 +132,11 @@ export function AddBookModal({
     } else {
       // Manual add validation
       if (!formData.title.trim()) {
-        setError('Title is required');
+        setError(t('addBook.titleRequired'));
         return;
       }
       if (!formData.author.trim()) {
-        setError('Author is required');
+        setError(t('addBook.authorRequired'));
         return;
       }
 
@@ -193,10 +198,10 @@ export function AddBookModal({
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold text-white">
-                        Add Book
+                        {t('addBook.title')}
                       </h2>
                       <p className="text-white/60 text-sm">
-                        Upload EPUB/PDF or add manually
+                        {t('addBook.subtitle')}
                       </p>
                     </div>
                   </div>
@@ -224,7 +229,7 @@ export function AddBookModal({
                   {/* Drag and Drop Zone */}
                   <div>
                     <label className="block text-white/80 text-sm font-medium mb-2">
-                      Upload File
+                      {t('addBook.uploadLabel')}
                     </label>
                     <div 
                       className={cn(
@@ -245,20 +250,21 @@ export function AddBookModal({
                       />
                       <UploadCloud className={cn("w-8 h-8 mb-2", selectedFile ? "text-green-400" : "text-white/40")} />
                       <p className="text-white/60 text-sm text-center px-4">
-                        {selectedFile ? selectedFile.name : "Drag & drop your EPUB or PDF here, or click to select"}
+                        {selectedFile ? selectedFile.name : t('addBook.dropHint')}
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-white/80 text-sm font-medium mb-2">
-                      Title {selectedFile ? '(Optional)' : '*'}
+                    <label htmlFor="addbook-title" className="block text-white/80 text-sm font-medium mb-2">
+                      {t('addBook.titleLabel')} {selectedFile ? t('addBook.optional') : '*'}
                     </label>
                     <input
+                      id="addbook-title"
                       type="text"
                       value={formData.title}
                       onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                      placeholder="Enter book title"
+                      placeholder={t('addBook.titlePlaceholder')}
                       className={cn(
                         'w-full px-4 py-3 rounded-xl',
                         'bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-white/40',
@@ -268,14 +274,15 @@ export function AddBookModal({
                   </div>
 
                   <div>
-                    <label className="block text-white/80 text-sm font-medium mb-2">
-                      Author {selectedFile ? '(Optional)' : '*'}
+                    <label htmlFor="addbook-author" className="block text-white/80 text-sm font-medium mb-2">
+                      {t('addBook.authorLabel')} {selectedFile ? t('addBook.optional') : '*'}
                     </label>
                     <input
+                      id="addbook-author"
                       type="text"
                       value={formData.author}
                       onChange={(e) => setFormData({ ...formData, author: e.target.value })}
-                      placeholder="Enter author name"
+                      placeholder={t('addBook.authorPlaceholder')}
                       className={cn(
                         'w-full px-4 py-3 rounded-xl',
                         'bg-white/5 backdrop-blur-md border border-white/10 text-white placeholder:text-white/40',
@@ -285,10 +292,11 @@ export function AddBookModal({
                   </div>
 
                   <div>
-                    <label className="block text-white/80 text-sm font-medium mb-2">
-                      Mood
+                    <label htmlFor="addbook-mood" className="block text-white/80 text-sm font-medium mb-2">
+                      {t('addBook.moodLabel')}
                     </label>
                     <select
+                      id="addbook-mood"
                       value={formData.mood}
                       onChange={(e) => setFormData({ ...formData, mood: e.target.value as MoodTag })}
                       className={cn(
@@ -312,7 +320,7 @@ export function AddBookModal({
                     onClick={handleClose}
                     disabled={loading}
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     variant="primary"
@@ -320,7 +328,7 @@ export function AddBookModal({
                     loading={loading}
                     disabled={(!selectedFile && (!formData.title || !formData.author))}
                   >
-                    {loading ? 'Processing...' : (selectedFile ? 'Upload Book' : 'Add Book')}
+                    {loading ? t('addBook.processing') : (selectedFile ? t('addBook.submitUpload') : t('addBook.submitManual'))}
                   </Button>
                 </div>
               </GlassPanel>

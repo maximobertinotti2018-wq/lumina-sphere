@@ -50,15 +50,6 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          <div>
-            <label className="block text-sm text-white/60 mb-2 mt-4">{t("settings.theme") || "Tema inmersivo"}</label>
-            <div className="flex gap-4 flex-wrap">
-              <Button variant="outline">Classic</Button>
-              <Button variant="outline">Berserk</Button>
-              <Button variant="outline">Fullmetal Alchemist</Button>
-            </div>
-            <p className="text-xs text-white/40 mt-2">Los temas persistirán pronto.</p>
-          </div>
         </GlassPanel>
       </div>
     </MainLayout>

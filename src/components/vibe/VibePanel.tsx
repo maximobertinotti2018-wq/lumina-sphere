@@ -49,7 +49,7 @@ export function VibePanel({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.2 }}
-            className="fixed left-20 top-24 z-[60] w-[min(22rem,calc(100vw-6rem))] max-h-[80vh] overflow-y-auto"
+            className="fixed z-[60] max-h-[75vh] overflow-y-auto max-lg:inset-x-3 max-lg:top-16 lg:left-20 lg:top-24 lg:w-[min(22rem,calc(100vw-6rem))]"
           >
             <GlassPanel variant="strong" className="p-4 space-y-4">
               <div className="flex items-center justify-between">
@@ -71,9 +71,17 @@ export function VibePanel({
               )}
 
               {!loading && !data && (
-                <p className="text-white/40 text-sm text-center py-8">
-                  No se pudieron cargar recomendaciones.
-                </p>
+                <div className="text-center py-8 space-y-3">
+                  <p className="text-white/40 text-sm">
+                    No se pudieron cargar recomendaciones.
+                  </p>
+                  <button
+                    onClick={() => setLoaded(false)}
+                    className="px-4 py-2 rounded-lg bg-purple-500/20 text-purple-300 text-sm hover:bg-purple-500/30 transition-colors"
+                  >
+                    Reintentar
+                  </button>
+                </div>
               )}
 
               {!loading && data && (

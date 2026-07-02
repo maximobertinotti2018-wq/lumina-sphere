@@ -81,8 +81,6 @@ export function Sidebar({
       icon: <TrendingUp className="w-5 h-5" />,
       label: t('nav.analytics') || 'Analytics',
       href: '/analytics',
-      badge: 'Pro',
-      locked: userTier === 'starter',
     },
     {
       icon: <Settings className="w-5 h-5" />,
@@ -203,8 +201,8 @@ export function Sidebar({
                 )}
               </div>
 
-              {/* Upgrade Button */}
-              {userTier !== 'premium' && !isCollapsed && (
+              {/* Upgrade Button — solo donde hay flujo de upgrade real (library) */}
+              {userTier !== 'premium' && !isCollapsed && onUpgrade && (
                 <motion.div
                   initial={{ opacity: 0, y: 10 }}
                   animate={{ opacity: 1, y: 0 }}
@@ -365,7 +363,7 @@ export function Sidebar({
                       </div>
                     </div>
 
-                    {userTier !== 'premium' && (
+                    {userTier !== 'premium' && onUpgrade && (
                       <div className="mt-4">
                         <Button
                           variant="primary"

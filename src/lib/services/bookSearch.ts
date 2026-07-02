@@ -15,9 +15,10 @@ export interface BookSearchResult {
 
 export async function searchBooks(query: string): Promise<BookSearchResult[]> {
   try {
+    // Cache de 1 hora por query: la misma búsqueda no repite llamadas externas.
     const [googleRes, olRes] = await Promise.all([
-      fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&key=${process.env.GOOGLE_BOOKS_API_KEY}`),
-      fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`)
+      fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&key=${process.env.GOOGLE_BOOKS_API_KEY}`, { next: { revalidate: 3600 } }),
+      fetch(`https://openlibrary.org/search.json?q=${encodeURIComponent(query)}&limit=10`, { next: { revalidate: 3600 } })
     ]);
 
     const googleData = await googleRes.json();

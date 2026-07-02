@@ -157,12 +157,15 @@ export function CompanionChat({
         className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[70]"
       />
 
-      {/* Chat Modal */}
+      {/* Chat Modal — el centrado va en un wrapper flex, NO en el motion.div:
+          framer-motion pisa el transform de Tailwind (-translate-x-1/2) y el
+          modal quedaba corrido fuera de la pantalla en mobile. */}
+      <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 pointer-events-none">
       <motion.div
         initial={{ opacity: 0, scale: 0.95, y: 20 }}
         animate={{ opacity: 1, scale: 1, y: 0 }}
         exit={{ opacity: 0, scale: 0.95, y: 20 }}
-        className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-[70] w-[calc(100vw-2rem)] max-w-md max-h-[70vh] flex flex-col"
+        className="pointer-events-auto w-full max-w-md max-h-[75vh] flex flex-col"
       >
         <GlassPanel variant="strong" className="flex flex-col h-full">
           {/* Header */}
@@ -185,6 +188,7 @@ export function CompanionChat({
             </div>
             <button
               onClick={onClose}
+              aria-label="Cerrar chat"
               className="p-2 rounded-lg hover:bg-white/10 transition-colors"
             >
               <X className="w-5 h-5 text-white/60" />
@@ -282,6 +286,7 @@ export function CompanionChat({
           </div>
         </GlassPanel>
       </motion.div>
+      </div>
     </>
   );
 }

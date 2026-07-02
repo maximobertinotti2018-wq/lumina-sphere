@@ -2,9 +2,8 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { auth } from '@/lib/auth';
 import { rateLimit } from '@/lib/security/rateLimit';
-import { GoogleGenAI } from '@google/genai';
+import { geminiChat, hasGemini } from '@/lib/ai/gemini';
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 const TMDB_API_KEY = process.env.TMDB_API_KEY;
 const SPOTIFY_CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
 const SPOTIFY_CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
@@ -73,12 +72,18 @@ Devolvé SOLO un objeto JSON válido (sin markdown ni backticks) con esta estruc
 Contenido del libro:
 ${textToAnalyze}`;
 
-    const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash-lite',
-      contents: prompt,
-    });
+    if (!hasGemini()) {
+      return NextResponse.json({ error: 'Falta GEMINI_API_KEY en el servidor' }, { status: 500 });
+    }
 
-    const responseText = response.text || '{}';
+    // geminiChat prueba una cadena de modelos con reintentos: si uno está
+    // saturado (503/429), cae al siguiente en vez de fallarle al usuario.
+    const responseText =
+      (await geminiChat({
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        maxOutputTokens: 2048,
+      })) || '{}';
     let aiData;
     try {
       const cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();

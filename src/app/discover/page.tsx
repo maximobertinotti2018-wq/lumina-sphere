@@ -35,7 +35,7 @@ export default async function DiscoverPage({
             {t('discover.title')}
           </h1>
           <p className="text-white/60 text-lg max-w-2xl">
-            Explore public domain classics, trending bestsellers, and expand your library.
+            {t('discover.subtitle')}
           </p>
         </div>
 
@@ -54,7 +54,7 @@ export default async function DiscoverPage({
                 <GlassPanel key={idx} variant="default" className="p-4 flex flex-col items-center text-center group transition-all hover:bg-white/10 hover:scale-105">
                   <div className="relative w-full aspect-[2/3] rounded-lg overflow-hidden mb-4 shadow-xl">
                     {book.coverUrl ? (
-                      <Image src={book.coverUrl} alt={book.title} fill className="object-cover" />
+                      <Image src={book.coverUrl} alt={book.title} fill sizes="(max-width: 768px) 45vw, 20vw" className="object-cover" />
                     ) : (
                       <div className="w-full h-full bg-white/5 flex items-center justify-center">
                         <BookOpen className="w-8 h-8 text-white/20" />
@@ -83,15 +83,20 @@ export default async function DiscoverPage({
 }
 
 async function SearchResults({ query }: { query: string }) {
-  // We can fetch from API route internally or call service directly if we are Server Component
   const { searchBooks } = await import('@/lib/services/bookSearch');
-  const { findReadableSource } = await import('@/lib/services/publicDomain');
+  const { findReadableSourcesForQuery, matchReadableSource } = await import('@/lib/services/publicDomain');
 
-  const results = await searchBooks(query);
-  const enriched = await Promise.all(results.map(async (book) => {
-    const readable = await findReadableSource(book.title, book.author);
+  // Búsqueda de catálogo y de dominio público EN PARALELO, una llamada cada una
+  // (antes: una llamada a Gutendex por resultado → hasta 20).
+  const [results, gutenbergSources] = await Promise.all([
+    searchBooks(query),
+    findReadableSourcesForQuery(query),
+  ]);
+
+  const enriched = results.map((book) => {
+    const readable = matchReadableSource(gutenbergSources, book.title, book.author);
     return { ...book, isPublicDomain: !!readable, readable: !!readable, fileUrl: readable };
-  }));
+  });
 
   if (enriched.length === 0) {
     return <div className="text-white/60">No encontramos resultados para "{query}".</div>;
@@ -103,7 +108,7 @@ async function SearchResults({ query }: { query: string }) {
         <GlassPanel key={idx} variant="strong" className="p-4 flex gap-4 transition-all hover:bg-white/10">
           <div className="relative w-24 h-36 rounded-md overflow-hidden shrink-0 shadow-lg">
             {book.coverUrl ? (
-              <Image src={book.coverUrl} alt={book.title} fill className="object-cover" />
+              <Image src={book.coverUrl} alt={book.title} fill sizes="96px" className="object-cover" />
             ) : (
               <div className="w-full h-full bg-white/5 flex items-center justify-center">
                 <BookOpen className="w-6 h-6 text-white/20" />

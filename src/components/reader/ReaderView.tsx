@@ -7,6 +7,7 @@ import { ReaderControls } from './ReaderControls';
 import { NoteSection } from './NoteSection';
 import { FullPageSpinner } from '@/components/ui/Spinner';
 import { cn } from '@/lib/utils/cn';
+import { getNotesForBook, createNote, updateNote, deleteNote } from '@/lib/actions/noteActions';
 import type { Book, Note } from '@/types';
 
 interface ReaderViewProps {
@@ -85,11 +86,17 @@ export function ReaderView({
     }
   }, [pages.length]);
 
-  // Load notes on mount
+  // Cargar las notas guardadas del libro al montar.
   useEffect(() => {
-    // TODO: Fetch notes from API
-    // const loadedNotes = await fetchNotes(book.id);
-    // setNotes(loadedNotes);
+    let cancelled = false;
+    getNotesForBook(book.id)
+      .then((res) => {
+        if (!cancelled && res.success && res.data) {
+          setNotes(res.data as unknown as Note[]);
+        }
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
   }, [book.id]);
 
   // Handle PDF load
@@ -134,12 +141,12 @@ export function ReaderView({
 
   const { data: session } = useSession();
 
-  // Handle note actions
+  // Notas: optimistas en la UI, persistidas vía server actions.
   const handleAddNote = async (content: string) => {
-    const newNote: Note = {
-      id: Date.now().toString(),
-      userId: session?.user?.id || 'unknown', // Get from auth
-
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: Note = {
+      id: tempId,
+      userId: session?.user?.id || 'unknown',
       bookId: book.id,
       content,
       color: '#8b5cf6',
@@ -147,23 +154,32 @@ export function ReaderView({
       createdAt: new Date(),
       updatedAt: new Date(),
     };
+    setNotes((prev) => [...prev, optimistic]);
 
-    setNotes([...notes, newNote]);
-    // TODO: Save to API
+    const res = await createNote(book.id, content, currentPage);
+    if (res.success && res.data) {
+      const saved = res.data as unknown as Note;
+      setNotes((prev) => prev.map((n) => (n.id === tempId ? saved : n)));
+    } else {
+      // Falló el guardado: sacamos la nota optimista para no mentir.
+      setNotes((prev) => prev.filter((n) => n.id !== tempId));
+    }
   };
 
   const handleDeleteNote = async (noteId: string) => {
-    setNotes(notes.filter(n => n.id !== noteId));
-    // TODO: Delete from API
+    const previous = notes;
+    setNotes((prev) => prev.filter((n) => n.id !== noteId));
+    const res = await deleteNote(noteId);
+    if (!res.success) setNotes(previous);
   };
 
   const handleUpdateNote = async (noteId: string, content: string) => {
-    setNotes(notes.map(n => 
-      n.id === noteId 
-        ? { ...n, content, updatedAt: new Date() }
-        : n
-    ));
-    // TODO: Update in API
+    const previous = notes;
+    setNotes((prev) =>
+      prev.map((n) => (n.id === noteId ? { ...n, content, updatedAt: new Date() } : n))
+    );
+    const res = await updateNote(noteId, content);
+    if (!res.success) setNotes(previous);
   };
 
   // Get notes for current page
@@ -173,6 +189,25 @@ export function ReaderView({
   useEffect(() => {
     contentRef.current?.scrollTo({ top: 0, behavior: 'auto' });
   }, [currentPage]);
+
+  // Swipe horizontal para pasar página en touch. Solo dispara si el gesto
+  // es claramente horizontal (no interfiere con el scroll vertical).
+  const touchStart = useRef<{ x: number; y: number } | null>(null);
+  const handleTouchStart = (e: React.TouchEvent) => {
+    const t = e.touches[0];
+    if (t) touchStart.current = { x: t.clientX, y: t.clientY };
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const start = touchStart.current;
+    touchStart.current = null;
+    const t = e.changedTouches[0];
+    if (!start || !t) return;
+    const dx = t.clientX - start.x;
+    const dy = t.clientY - start.y;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > 2 * Math.abs(dy)) {
+      handlePageChange(dx < 0 ? currentPage + 1 : currentPage - 1);
+    }
+  };
 
   // Navegación con las flechas del teclado (← →) y ESC para salir de focus.
   useEffect(() => {
@@ -217,10 +252,12 @@ export function ReaderView({
               /* Lector de texto (EPUB/PDF ya extraído a texto) */
               <div
                 ref={contentRef}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={handleTouchEnd}
                 className="w-full h-full overflow-y-auto bg-gradient-to-b from-[#1c1828] via-[#161320] to-[#0e0c14]"
               >
                 <article
-                  className="mx-auto max-w-[700px] w-full px-6 sm:px-8 pt-14 pb-40 text-white/[0.88] font-serif text-justify selection:bg-purple-500/40"
+                  className="mx-auto max-w-[700px] w-full px-6 sm:px-8 pt-16 lg:pt-14 pb-40 text-white/[0.88] font-serif text-left sm:text-justify selection:bg-purple-500/40"
                   style={{
                     fontSize: `${(zoom / 100) * 1.05}rem`,
                     lineHeight: 1.75,

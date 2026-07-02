@@ -3,16 +3,17 @@ import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Button } from '@/components/ui/Button';
 import { BookOpen, TrendingUp, Heart, Clock } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { redirect } from 'next/navigation';
 import { getUserBooks, getUserStats } from '@/lib/actions/bookActions';
+import { STARTER_BOOK_LIMIT } from '@/lib/constants';
+import { LandingPage } from '@/components/landing/LandingPage';
 import { EmptyState } from '@/components/ui/EmptyState';
 import Link from 'next/link';
 import { serverT } from '@/lib/i18n/serverT';
 
 export default async function HomePage() {
   const session = await auth();
-  // Sin sesión: al login. Antes devolvía null → página en blanco para anónimos.
-  if (!session?.user?.id) redirect('/login');
+  // Sin sesión: landing pública que explica la app (antes: página en blanco).
+  if (!session?.user?.id) return <LandingPage />;
 
   const t = await serverT();
 
@@ -138,8 +139,10 @@ export default async function HomePage() {
           </>
         )}
 
-        {/* Tier Upgrade Prompt (only for starter users) */}
-        {userTier === 'starter' && (
+        {/* Aviso de límite: SOLO cuando el usuario starter llegó de verdad
+            al tope de libros. Antes se mostraba "alcanzaste tu límite" a
+            usuarios recién registrados con 0 libros. */}
+        {userTier === 'starter' && stats.totalBooks >= STARTER_BOOK_LIMIT && (
           <GlassPanel variant="strong" className="p-8 mt-8" isPremium>
             <div className="text-center space-y-4">
               <h2 className="text-3xl font-bold text-white">
@@ -148,7 +151,7 @@ export default async function HomePage() {
               <p className="text-white/60 text-lg max-w-2xl mx-auto">
                 {t('upgrade.description')}
               </p>
-              <Link href="/settings">
+              <Link href="/library">
                 <Button variant="primary" size="lg">
                   {t('common.upgrade')}
                 </Button>

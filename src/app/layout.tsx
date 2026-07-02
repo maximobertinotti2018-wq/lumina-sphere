@@ -19,7 +19,7 @@ export const viewport = {
   themeColor: '#1a1625',
   width: 'device-width',
   initialScale: 1,
-  maximumScale: 1,
+  // Sin maximumScale: bloquear el pinch-zoom es una barrera de accesibilidad.
 };
 
 export const metadata: Metadata = {

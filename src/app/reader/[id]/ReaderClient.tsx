@@ -76,8 +76,9 @@ export default function ReaderClient({ book, fileUrl, initialPage = 1 }: { book:
         onClose={handleClose}
       />
 
-      {/* Riel de íconos (izquierda) — abre un panel a la vez */}
-      <div className="fixed left-3 top-1/2 -translate-y-1/2 z-[61] flex flex-col gap-2">
+      {/* Riel de íconos — vertical a la izquierda en desktop; horizontal
+          arriba a la derecha en mobile para no pisar el texto del libro */}
+      <div className="fixed z-[61] flex gap-2 max-lg:top-3 max-lg:right-3 max-lg:flex-row lg:left-3 lg:top-1/2 lg:-translate-y-1/2 lg:flex-col">
         <button
           onClick={() => toggle("characters")}
           className={railBtn(dock === "characters")}

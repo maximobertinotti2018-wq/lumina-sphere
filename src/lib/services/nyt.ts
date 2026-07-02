@@ -2,7 +2,12 @@ export async function getNYTBestsellers() {
   try {
     if (!process.env.NYT_API_KEY) return [];
     
-    const res = await fetch(`https://api.nytimes.com/svc/books/v3/lists/current/hardcover-fiction.json?api-key=${process.env.NYT_API_KEY}`);
+    // Los bestsellers cambian semanalmente: cachear 1 hora evita pegarle
+    // a la API del NYT en cada visita a Discover.
+    const res = await fetch(
+      `https://api.nytimes.com/svc/books/v3/lists/current/hardcover-fiction.json?api-key=${process.env.NYT_API_KEY}`,
+      { next: { revalidate: 3600 } }
+    );
     const data = await res.json();
     
     if (data.results && data.results.books) {

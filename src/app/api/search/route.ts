@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { rateLimit } from '@/lib/security/rateLimit';
 import { searchBooks } from '@/lib/services/bookSearch';
-import { findReadableSource } from '@/lib/services/publicDomain';
+import { findReadableSourcesForQuery, matchReadableSource } from '@/lib/services/publicDomain';
 
 export async function GET(request: NextRequest) {
   const session = await auth();
@@ -26,18 +26,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const results = await searchBooks(q);
-    
-    // Enrich with public domain readable source
-    const enrichedResults = await Promise.all(results.map(async (book) => {
-      const readableSource = await findReadableSource(book.title, book.author);
+    // Catálogo + dominio público en paralelo; matching local sin N+1.
+    const [results, gutenbergSources] = await Promise.all([
+      searchBooks(q),
+      findReadableSourcesForQuery(q),
+    ]);
+
+    const enrichedResults = results.map((book) => {
+      const readableSource = matchReadableSource(gutenbergSources, book.title, book.author);
       return {
         ...book,
         isPublicDomain: !!readableSource,
         readable: !!readableSource,
         fileUrl: readableSource,
       };
-    }));
+    });
 
     // If query matches a series exactly, we could resolve it, but for now just return results
     return NextResponse.json({ results: enrichedResults });

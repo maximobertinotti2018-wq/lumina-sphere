@@ -51,7 +51,7 @@ export function CompanionBar({
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: -16 }}
             transition={{ duration: 0.2 }}
-            className="fixed left-20 top-24 z-[60] w-[min(18rem,calc(100vw-6rem))]"
+            className="fixed z-[60] max-lg:inset-x-3 max-lg:top-16 lg:left-20 lg:top-24 lg:w-[min(18rem,calc(100vw-6rem))]"
           >
             <GlassPanel variant="strong" className="p-4 max-h-[70vh] overflow-y-auto">
               {/* Header */}
