@@ -3,12 +3,25 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useSession } from 'next-auth/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Volume2, VolumeX } from 'lucide-react';
 import { ReaderControls } from './ReaderControls';
 import { NoteSection } from './NoteSection';
 import { FullPageSpinner } from '@/components/ui/Spinner';
 import { cn } from '@/lib/utils/cn';
 import { getNotesForBook, createNote, updateNote, deleteNote } from '@/lib/actions/noteActions';
+import { useAmbientReader } from '@/lib/audio/useAmbientReader';
+import type { AmbientScene } from '@/lib/audio/sceneDetector';
+import { useLanguage } from '@/context/LanguageContext';
 import type { Book, Note } from '@/types';
+
+// Etiqueta visible del ambiente detectado (feedback para el usuario).
+const SCENE_LABELS: Record<AmbientScene, { es: string; en: string }> = {
+  rain: { es: '🌧️ Lluvia', en: '🌧️ Rain' },
+  tension: { es: '🌑 Tensión', en: '🌑 Tension' },
+  wind: { es: '🌬️ Viento', en: '🌬️ Wind' },
+  sea: { es: '🌊 Mar', en: '🌊 Sea' },
+  fire: { es: '🔥 Fuego', en: '🔥 Fire' },
+};
 
 interface ReaderViewProps {
   book: Book;
@@ -82,6 +95,11 @@ export function ReaderView({
     }
     setIsLoading(false);
   }, [pages.length]);
+
+  // Ambiente sonoro dinámico según lo que se está leyendo.
+  const { language } = useLanguage();
+  const currentText = pages[currentPage - 1] || '';
+  const { enabled: soundOn, toggle: toggleSound, scene } = useAmbientReader(currentText);
 
   // Cargar las notas guardadas del libro al montar.
   useEffect(() => {
@@ -213,6 +231,39 @@ export function ReaderView({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Control de sonido ambiental — se oculta en modo enfoque.
+          Mobile: arriba a la izquierda (el dock va a la derecha). Desktop: arriba a la derecha. */}
+      {!isFocusMode && pages.length > 0 && (
+        <div className="fixed z-[62] flex items-center gap-2 top-3 left-3 lg:left-auto lg:right-4 lg:top-4">
+          <AnimatePresence>
+            {soundOn && (
+              <motion.span
+                initial={{ opacity: 0, x: 8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 8 }}
+                className="px-3 py-1.5 rounded-full bg-black/50 backdrop-blur-md border border-white/15 text-white/80 text-xs whitespace-nowrap"
+              >
+                {scene ? SCENE_LABELS[scene][language] : (language === 'es' ? '♪ En calma' : '♪ Calm')}
+              </motion.span>
+            )}
+          </AnimatePresence>
+          <button
+            onClick={toggleSound}
+            aria-label={soundOn ? 'Silenciar sonido ambiente' : 'Activar sonido ambiente'}
+            aria-pressed={soundOn}
+            title={soundOn ? 'Sonido ambiente: activado' : 'Sonido ambiente: desactivado'}
+            className={cn(
+              'p-3 rounded-full backdrop-blur-md border shadow-lg transition-all',
+              soundOn
+                ? 'bg-purple-600/40 border-purple-400/50 text-white'
+                : 'bg-white/10 border-white/15 text-white/70 hover:bg-white/20 hover:text-white'
+            )}
+          >
+            {soundOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
+          </button>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex h-full">
