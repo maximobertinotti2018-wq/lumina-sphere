@@ -7,3 +7,6 @@
 *.log
 *.tsbuildinfo
 .DS_Store
+
+# Config local de Claude Code (paths de la maquina + settings personales)
+.claude/
