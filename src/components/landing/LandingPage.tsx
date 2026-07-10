@@ -2,6 +2,8 @@ import Link from 'next/link';
 import { BookOpen, MessageCircle, Clapperboard, Music, Sparkles, Library } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Button } from '@/components/ui/Button';
+import { DemoLoginButton } from '@/components/auth/DemoLoginButton';
+import { DEMO_ENABLED } from '@/lib/demo';
 
 /**
  * Landing pública para visitantes sin sesión.
@@ -71,8 +73,9 @@ export function LandingPage() {
           hermoso, charlas con los personajes y la banda sonora perfecta para cada historia.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
+          {DEMO_ENABLED && <DemoLoginButton variant="primary" size="lg" label="Probar demo" />}
           <Link href="/register">
-            <Button variant="primary" size="lg" className="w-full sm:w-auto">
+            <Button variant={DEMO_ENABLED ? 'outline' : 'primary'} size="lg" className="w-full sm:w-auto">
               Crear cuenta gratis
             </Button>
           </Link>
@@ -83,7 +86,9 @@ export function LandingPage() {
           </Link>
         </div>
         <p className="text-white/30 text-sm mt-4">
-          Gratis hasta 5 libros. Sin tarjeta.
+          {DEMO_ENABLED
+            ? 'Entrá a la demo sin registrarte. Gratis hasta 5 libros. Sin tarjeta.'
+            : 'Gratis hasta 5 libros. Sin tarjeta.'}
         </p>
       </section>
 

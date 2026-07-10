@@ -6,6 +6,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { GlassPanel } from "@/components/ui/GlassPanel";
 import { Button } from "@/components/ui/Button";
+import { DemoLoginButton } from "@/components/auth/DemoLoginButton";
+import { DEMO_ENABLED } from "@/lib/demo";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function LoginPage() {
@@ -100,6 +102,17 @@ export default function LoginPage() {
             <Button onClick={handleGoogleSignIn} variant="outline" className="w-full mt-4">
               {t("auth.continueWithGoogle")}
             </Button>
+          </>
+        )}
+
+        {DEMO_ENABLED && (
+          <>
+            <div className="mt-6 flex items-center justify-center">
+              <span className="text-sm text-gray-400">o probá sin cuenta</span>
+            </div>
+            <div className="mt-4 flex justify-center [&>div]:w-full [&_button]:w-full">
+              <DemoLoginButton variant="outline" size="md" label="Entrar a la demo" />
+            </div>
           </>
         )}
 
