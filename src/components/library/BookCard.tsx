@@ -1,7 +1,6 @@
 'use client';
 
 import Image from 'next/image';
-import { motion } from 'framer-motion';
 import { Heart, BookOpen, MoreVertical, Star } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { cn } from '@/lib/utils/cn';
@@ -58,11 +57,7 @@ export function BookCard({
 
   if (layout === 'list') {
     return (
-      <motion.div
-        whileHover={{ scale: 1.02, y: -4 }}
-        transition={{ duration: 0.2 }}
-        className={cn(className, isPending && "opacity-50 grayscale pointer-events-none")}
-      >
+      <div className={cn(className, isPending && "opacity-50 grayscale pointer-events-none")}>
         <GlassPanel variant="default" hover className="p-4">
           <div className="flex gap-4">
             {/* Cover */}
@@ -98,11 +93,9 @@ export function BookCard({
                     <span>{Math.round(progress)}% complete</span>
                   </div>
                   <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                    <motion.div
-                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
-                      initial={{ width: 0 }}
-                      animate={{ width: `${progress}%` }}
-                      transition={{ duration: 0.5, ease: 'easeOut' }}
+                    <div
+                      className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-[width] duration-500 ease-out"
+                      style={{ width: `${progress}%` }}
                     />
                   </div>
                 </div>
@@ -139,17 +132,13 @@ export function BookCard({
             </div>
           </div>
         </GlassPanel>
-      </motion.div>
+      </div>
     );
   }
 
   // Grid layout
   return (
-    <motion.div
-      whileHover={{ scale: 1.05, y: -8 }}
-      transition={{ duration: 0.3, ease: 'easeOut' }}
-      className={cn(className, isPending && "opacity-50 grayscale pointer-events-none")}
-    >
+    <div className={cn(className, isPending && "opacity-50 grayscale pointer-events-none")}>
       <GlassPanel 
         variant="default" 
         hover 
@@ -211,11 +200,9 @@ export function BookCard({
                 <span>{Math.round(progress)}%</span>
               </div>
               <div className="w-full h-1.5 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500"
-                  initial={{ width: 0 }}
-                  animate={{ width: `${progress}%` }}
-                  transition={{ duration: 0.5, ease: 'easeOut' }}
+                <div
+                  className="h-full bg-gradient-to-r from-purple-500 to-blue-500 transition-[width] duration-500 ease-out"
+                  style={{ width: `${progress}%` }}
                 />
               </div>
             </div>
@@ -250,6 +237,6 @@ export function BookCard({
           )}
         </div>
       </GlassPanel>
-    </motion.div>
+    </div>
   );
 }
