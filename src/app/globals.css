@@ -4,13 +4,11 @@
 
 /* ==========================================
    FONTS
-   ========================================== */
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap');
-
-:root {
-  --font-inter: 'Inter', sans-serif;
-  --font-playfair: 'Playfair Display', serif;
-}
+   ==========================================
+   Inter y Playfair se cargan self-hosted con next/font (ver layout.tsx),
+   que define --font-inter y --font-playfair sobre <html>. NO redefinir esas
+   variables acá ni importar Google Fonts por URL: el @import era
+   render-blocking y encima lo bloqueaba la CSP (font-src 'self'). */
 
 /* ==========================================
    GLASSMORPHISM DESIGN SYSTEM
