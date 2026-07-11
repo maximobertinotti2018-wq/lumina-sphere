@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Heart, BookOpen, MoreVertical, Star } from 'lucide-react';
 import { GlassPanel } from '@/components/ui/GlassPanel';
@@ -65,15 +66,16 @@ export function BookCard({
         <GlassPanel variant="default" hover className="p-4">
           <div className="flex gap-4">
             {/* Cover */}
-            <div 
-              className="relative w-20 h-28 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-500/20 to-blue-500/20"
-              style={{
-                backgroundImage: book.coverUrl ? `url(${book.coverUrl})` : undefined,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-              }}
-            >
-              {!book.coverUrl && (
+            <div className="relative w-20 h-28 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-purple-500/20 to-blue-500/20">
+              {book.coverUrl ? (
+                <Image
+                  src={book.coverUrl}
+                  alt={book.title}
+                  fill
+                  sizes="80px"
+                  className="object-cover"
+                />
+              ) : (
                 <div className="absolute inset-0 flex items-center justify-center">
                   <BookOpen className="w-8 h-8 text-white/40" />
                 </div>
@@ -156,15 +158,16 @@ export function BookCard({
       >
         {/* Cover Image */}
         <div className="relative mb-4">
-          <div 
-            className="aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-purple-500/20 to-blue-500/20 relative"
-            style={{
-              backgroundImage: book.coverUrl ? `url(${book.coverUrl})` : undefined,
-              backgroundSize: 'cover',
-              backgroundPosition: 'center',
-            }}
-          >
-            {!book.coverUrl && (
+          <div className="aspect-[2/3] rounded-lg overflow-hidden bg-gradient-to-br from-purple-500/20 to-blue-500/20 relative">
+            {book.coverUrl ? (
+              <Image
+                src={book.coverUrl}
+                alt={book.title}
+                fill
+                sizes="(max-width: 768px) 45vw, 200px"
+                className="object-cover"
+              />
+            ) : (
               <div className="absolute inset-0 flex items-center justify-center">
                 <BookOpen className="w-12 h-12 text-white/40" />
               </div>

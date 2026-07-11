@@ -1,3 +1,4 @@
+import Image from 'next/image';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Button } from '@/components/ui/Button';
@@ -116,16 +117,21 @@ export default async function HomePage() {
                   {readingBooks.slice(0, 3).map((book) => (
                     <Link href={`/reader/${book.id}`} key={book.id}>
                       <GlassPanel variant="default" className="p-4 cursor-pointer" hover>
-                        {book.coverUrl ? (
-                          <div 
-                            className="aspect-[2/3] rounded-lg mb-4 bg-cover bg-center" 
-                            style={{ backgroundImage: `url(${book.coverUrl})` }} 
-                          />
-                        ) : (
-                          <div className="aspect-[2/3] bg-gradient-to-br from-purple-500/20 to-blue-500/20 rounded-lg mb-4 flex items-center justify-center">
-                            <BookOpen className="w-8 h-8 text-white/20" />
-                          </div>
-                        )}
+                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden mb-4 bg-gradient-to-br from-purple-500/20 to-blue-500/20">
+                          {book.coverUrl ? (
+                            <Image
+                              src={book.coverUrl}
+                              alt={book.title}
+                              fill
+                              sizes="(max-width: 768px) 90vw, 240px"
+                              className="object-cover"
+                            />
+                          ) : (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <BookOpen className="w-8 h-8 text-white/20" />
+                            </div>
+                          )}
+                        </div>
                         <h3 className="text-white font-semibold mb-2 line-clamp-1">{book.title}</h3>
                         <p className="text-white/60 text-sm mb-3 line-clamp-1">{book.author}</p>
                         <div className="w-full h-2 bg-white/10 rounded-full overflow-hidden">
