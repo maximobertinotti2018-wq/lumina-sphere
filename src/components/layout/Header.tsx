@@ -62,9 +62,9 @@ export function Header({
         className
       )}
     >
-      <GlassPanel 
-        variant="strong" 
-        className="rounded-none border-x-0 border-t-0"
+      <GlassPanel
+        variant="strong"
+        className="rounded-none border-x-0 border-t-0 overflow-visible"
       >
         <div className="flex items-center justify-between gap-2 sm:gap-4 px-3 sm:px-6 py-3 sm:py-4">
           <motion.form

@@ -3,7 +3,7 @@ import { GlassPanel } from '@/components/ui/GlassPanel';
 import { Button } from '@/components/ui/Button';
 import { BookOpen, TrendingUp, Heart, Clock } from 'lucide-react';
 import { auth } from '@/lib/auth';
-import { getUserBooks, getUserStats } from '@/lib/actions/bookActions';
+import { getUserBooks } from '@/lib/actions/bookActions';
 import { STARTER_BOOK_LIMIT } from '@/lib/constants';
 import { LandingPage } from '@/components/landing/LandingPage';
 import { EmptyState } from '@/components/ui/EmptyState';
@@ -17,15 +17,19 @@ export default async function HomePage() {
 
   const t = await serverT();
 
-  const [booksRes, statsRes] = await Promise.all([
-    getUserBooks(),
-    getUserStats()
-  ]);
-
+  // Una sola query como fuente de verdad: los stats se derivan de acá. Evita
+  // el dashboard inconsistente que aparecía cuando getUserBooks y getUserStats
+  // se pedían por separado y una fallaba (ej: conexión fría a la DB).
+  const booksRes = await getUserBooks();
   const books = booksRes.data || [];
-  const stats = statsRes.data || { totalBooks: 0, booksRead: 0, currentlyReading: 0 };
-  
+
   const readingBooks = books.filter(b => b.status === 'reading');
+  const stats = {
+    totalBooks: books.length,
+    booksRead: books.filter(b => b.status === 'finished').length,
+    currentlyReading: readingBooks.length,
+    favorites: books.filter(b => b.isFavorite).length,
+  };
   const userTier = (session.user as any).subscriptionTier || 'starter';
 
   return (
@@ -82,7 +86,7 @@ export default async function HomePage() {
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">
-                      {books.filter(b => b.isFavorite).length}
+                      {stats.favorites}
                     </p>
                     <p className="text-sm text-white/60">{t('home.stats.favorites')}</p>
                   </div>
