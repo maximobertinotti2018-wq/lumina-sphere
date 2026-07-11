@@ -111,7 +111,7 @@ async function SearchResults({ query }: { query: string }) {
     {enriched.length > 0 && (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
       {enriched.map((book, idx) => (
-        <GlassPanel key={idx} variant="strong" className="p-4 flex gap-4 transition-all hover:bg-white/10">
+        <GlassPanel key={idx} variant="default" className="p-4 flex gap-4 transition-all hover:bg-white/10">
           <div className="relative w-24 h-36 rounded-md overflow-hidden shrink-0 shadow-lg">
             {book.coverUrl ? (
               <Image src={book.coverUrl} alt={book.title} fill sizes="96px" className="object-cover" />
@@ -164,7 +164,7 @@ async function SearchResults({ query }: { query: string }) {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {openAccess.map((book) => (
-            <GlassPanel key={book.id} variant="strong" className="p-5 flex flex-col transition-all hover:bg-white/10">
+            <GlassPanel key={book.id} variant="default" className="p-5 flex flex-col transition-all hover:bg-white/10">
               <h3 className="text-white font-semibold text-lg line-clamp-2">{book.title}</h3>
               <p className="text-white/60 text-sm mb-1">{book.author}</p>
               {book.year && <span className="text-xs text-green-300/80 mb-2">{book.year}</span>}
@@ -198,7 +198,7 @@ async function SearchResults({ query }: { query: string }) {
         </p>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {borrowable.map((book) => (
-            <GlassPanel key={book.id} variant="strong" className="p-4 flex gap-4 transition-all hover:bg-white/10">
+            <GlassPanel key={book.id} variant="default" className="p-4 flex gap-4 transition-all hover:bg-white/10">
               <div className="relative w-20 h-28 rounded-md overflow-hidden shrink-0 shadow-lg">
                 {book.coverUrl ? (
                   <Image src={book.coverUrl} alt={book.title} fill sizes="80px" className="object-cover" />
