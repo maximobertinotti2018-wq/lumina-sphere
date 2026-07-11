@@ -61,10 +61,12 @@ body {
 /* ==========================================
    GLASSMORPHISM COMPONENTS
    ========================================== */
+/* Tarjeta "glass" liviana: SIN backdrop-filter (caro para GPU cuando se
+   repite en grillas). Un degradé sólido semitransparente imita el frosted
+   sobre el fondo oscuro, con casi cero costo de render. El blur real se
+   reserva para .glass-panel-strong (header, modales), donde sí aporta. */
 .glass-panel {
-  background: var(--glass-bg);
-  backdrop-filter: blur(var(--glass-blur));
-  -webkit-backdrop-filter: blur(var(--glass-blur));
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.07), rgba(255, 255, 255, 0.03));
   border: 1px solid var(--glass-border);
 }
 
